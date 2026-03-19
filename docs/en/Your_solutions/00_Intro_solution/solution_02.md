@@ -1,140 +1,6 @@
-# Problem Set 01 – Solutions
 
----
 
-# Task 01 – Vector Algebra
-
-## Problem Statement
-
-Given the vectors
-
-$$
-\vec{a} = [2, 1, -3], \qquad \vec{b} = [4, -2, 1]
-$$
-
-Compute:
-
-- magnitudes of the vectors  
-- dot product  
-- cross product  
-
----
-
-## Theory
-
-### Magnitude of a Vector
-
-For a vector in three dimensions:
-
-$$
-|\vec{v}| = \sqrt{v_x^2 + v_y^2 + v_z^2}
-$$
-
----
-
-### Dot Product
-
-The scalar (dot) product is defined as:
-
-$$
-\vec{a} \cdot \vec{b} = a_x b_x + a_y b_y + a_z b_z
-$$
-
----
-
-### Cross Product
-
-The vector (cross) product is defined via a determinant:
-
-$$
-\vec{a} \times \vec{b} =
-\begin{vmatrix}
-\hat{i} & \hat{j} & \hat{k} \\
-a_x & a_y & a_z \\
-b_x & b_y & b_z
-\end{vmatrix}
-$$
-
----
-
-## Step-by-Step Solution
-
-### a) Magnitudes
-
-$$
-|\vec{a}| = \sqrt{2^2 + 1^2 + (-3)^2}
-$$
-
-$$
-|\vec{a}| = \sqrt{14}
-$$
-
----
-
-$$
-|\vec{b}| = \sqrt{4^2 + (-2)^2 + 1^2}
-$$
-
-$$
-|\vec{b}| = \sqrt{21}
-$$
-
----
-
-### b) Dot Product
-
-$$
-\vec{a} \cdot \vec{b} = 2 \cdot 4 + 1 \cdot (-2) + (-3) \cdot 1
-$$
-
-$$
-\vec{a} \cdot \vec{b} = 3
-$$
-
----
-
-### c) Cross Product
-
-$$
-\vec{a} \times \vec{b} =
-\begin{vmatrix}
-\hat{i} & \hat{j} & \hat{k} \\
-2 & 1 & -3 \\
-4 & -2 & 1
-\end{vmatrix}
-$$
-
-$$
-\vec{a} \times \vec{b} = [-5, -14, -8]
-$$
-
----
-
-## Final Result
-
-$$
-|\vec{a}| = \sqrt{14}, \qquad |\vec{b}| = \sqrt{21}
-$$
-
-$$
-\vec{a} \cdot \vec{b} = 3
-$$
-
-$$
-\vec{a} \times \vec{b} = [-5, -14, -8]
-$$
-
----
-
-## Interpretation
-
-- The magnitudes represent vector lengths.  
-- The dot product indicates an acute angle between vectors.  
-- The cross product is perpendicular to both vectors.
-
----
-
-# Task 02 – Systems of Equations
+# Task 02 – System of Linear Equations
 
 ## Problem Statement
 
@@ -154,20 +20,18 @@ $$
 
 A system of linear equations can be solved using substitution or elimination.
 
-For two equations:
+In the substitution method:
 
-$$
-\begin{cases}
-ax + by = c \\
-dx + ey = f
-\end{cases}
-$$
-
-One variable is expressed in terms of the other and substituted into the second equation.
+1. Solve one equation for one variable.
+2. Substitute into the other equation.
+3. Solve for the remaining variable.
+4. Back-substitute to find the second variable.
 
 ---
 
 ## Step-by-Step Solution
+
+### Step 1: Solve One Equation
 
 From the second equation:
 
@@ -178,36 +42,30 @@ $$
 Solve for $x$:
 
 $$
-x = 1 + y
+x = y + 1
 $$
 
 ---
 
-Substitute into the first equation:
+### Step 2: Substitute into the First Equation
+
+Substitute into $2x + 3y = 12$:
 
 $$
-2x + 3y = 12
-$$
-
-$$
-2(1 + y) + 3y = 12
+2(y + 1) + 3y = 12
 $$
 
 ---
 
-Expand:
+### Step 3: Simplify
 
 $$
-2 + 2y + 3y = 12
+2y + 2 + 3y = 12
 $$
 
 $$
-2 + 5y = 12
+5y + 2 = 12
 $$
-
----
-
-Solve for $y$:
 
 $$
 5y = 10
@@ -219,14 +77,12 @@ $$
 
 ---
 
-Substitute back to find $x$:
+### Step 4: Back-Substitution
+
+Substitute $y = 2$ into $x = y + 1$:
 
 $$
-x = 1 + y
-$$
-
-$$
-x = 1 + 2
+x = 2 + 1
 $$
 
 $$
@@ -238,11 +94,13 @@ $$
 ## Final Result
 
 $$
-x = 3, \qquad y = 2
+x = 3, \quad y = 2
 $$
 
 ---
 
 ## Interpretation
 
-The solution $(x, y) = (3, 2)$ represents the intersection point of the two lines in the plane. This point satisfies both equations simultaneously, indicating a unique solution to the system.
+The solution represents the point of intersection of the two lines in the Cartesian plane.
+
+The system has a unique solution, indicating that the lines intersect at exactly one point: $(3, 2)$.
