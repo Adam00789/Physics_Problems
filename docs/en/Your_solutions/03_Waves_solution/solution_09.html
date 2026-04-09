@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 09 – Damped Harmonic Oscillator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --panel: #13161e;
+    --border: #1e2330;
+    --accent: #6ee7f7;
+    --accent2: #f7c56e;
+    --accent3: #a78bfa;
+    --text: #c8ccd8;
+    --muted: #5a6070;
+    --underdamped: #6ee7f7;
+    --critical: #f7c56e;
+    --overdamped: #fb7185;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+  }
+
+  h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .title-block {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .title-block h2 {
+    font-size: 28px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  .equation {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .main {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .controls {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 180px;
+  }
+
+  .control-group label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 180px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  #bValue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 50px;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  .badge.underdamped { background: rgba(110,231,247,0.12); color: var(--underdamped); }
+  .badge.critical    { background: rgba(247,197,110,0.12); color: var(--critical); }
+  .badge.overdamped  { background: rgba(251,113,133,0.12); color: var(--overdamped); }
+
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) { .charts { grid-template-columns: 1fr; } }
+
+  .chart-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .chart-box h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  canvas {
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+  }
+
+  .theory {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 28px;
+    line-height: 1.75;
+  }
+
+  .theory h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .theory table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    margin-top: 10px;
+  }
+
+  .theory td, .theory th {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .theory th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="title-block">
+  <h1>Task 09 · Section 3: Waves</h1>
+  <h2>Damped Harmonic Oscillator</h2>
+  <div class="equation">m ẍ + b ẋ + k x = 0 &nbsp;|&nbsp; m = 1 kg, k = 4 N/m, x₀ = 1 m, ẋ₀ = 0</div>
+</div>
+
+<div class="main">
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Damping coefficient b</label>
+      <div class="slider-row">
+        <input type="range" id="bSlider" min="0" max="10" step="0.05" value="1">
+        <span id="bValue">1.00</span>
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom:6px; font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted);">Regime</div>
+      <span id="regimeBadge" class="badge underdamped">Underdamped</span>
+    </div>
+    <div style="font-size:14px; color:var(--muted); max-width:280px; line-height:1.5;">
+      Critical damping: <code id="bcrit">b_c = 4.00</code><br>
+      <span style="font-size:13px;">b &lt; b_c → underdamped &nbsp;|&nbsp; b = b_c → critical &nbsp;|&nbsp; b &gt; b_c → overdamped</span>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-box">
+      <h3>x(t) — Displacement vs Time</h3>
+      <canvas id="xtCanvas" height="280"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Phase Portrait — ẋ vs x</h3>
+      <canvas id="ppCanvas" height="280"></canvas>
+    </div>
+  </div>
+
+  <div class="theory">
+    <h3>Theory Summary</h3>
+    <p><strong>General solution</strong> of <em>mẍ + bẋ + kx = 0</em> with characteristic roots
+    <em>r = (−b ± √(b²−4mk)) / 2m</em>:</p>
+    <table>
+      <tr>
+        <th>Case</th><th>Condition</th><th>Form of Solution</th>
+      </tr>
+      <tr>
+        <td><span class="badge underdamped">Underdamped</span></td>
+        <td>b² &lt; 4mk</td>
+        <td>x(t) = e<sup>−γt</sup>(C₁cosω<sub>d</sub>t + C₂sinω<sub>d</sub>t),&nbsp; ω<sub>d</sub>=√(ω₀²−γ²)</td>
+      </tr>
+      <tr>
+        <td><span class="badge critical">Critically Damped</span></td>
+        <td>b² = 4mk</td>
+        <td>x(t) = (C₁ + C₂t)e<sup>−γt</sup></td>
+      </tr>
+      <tr>
+        <td><span class="badge overdamped">Overdamped</span></td>
+        <td>b² &gt; 4mk</td>
+        <td>x(t) = C₁e<sup>r₁t</sup> + C₂e<sup>r₂t</sup>, both r negative</td>
+      </tr>
+    </table>
+    <p style="margin-top:12px; font-size:15px; color:var(--muted);">Numerical integration via RK4 with Δt = 0.005 s over 20 s.</p>
+  </div>
+
+</div>
+
+<script>
+// ── Parameters ────────────────────────────────────────────────────────────────
+const m = 1, k = 4;
+const b_crit = 2 * Math.sqrt(m * k);  // 4.0
+
+const xtCanvas = document.getElementById('xtCanvas');
+const ppCanvas = document.getElementById('ppCanvas');
+const xtCtx = xtCanvas.getContext('2d');
+const ppCtx = ppCanvas.getContext('2d');
+const bSlider = document.getElementById('bSlider');
+const bValueEl = document.getElementById('bValue');
+const regimeBadge = document.getElementById('regimeBadge');
+
+function resizeCanvases() {
+  [xtCanvas, ppCanvas].forEach(c => {
+    c.width = c.clientWidth * devicePixelRatio;
+    c.height = c.clientHeight * devicePixelRatio;
+  });
+}
+
+// ── RK4 ──────────────────────────────────────────────────────────────────────
+function rk4(b, dt = 0.005, tMax = 20) {
+  const f = (x, v) => (-b * v - k * x) / m;
+  let x = 1, v = 0, t = 0;
+  const pts = [];
+  while (t <= tMax) {
+    pts.push({ t, x, v });
+    const k1x = v,             k1v = f(x, v);
+    const k2x = v + dt/2*k1v,  k2v = f(x + dt/2*k1x, v + dt/2*k1v);
+    const k3x = v + dt/2*k2v,  k3v = f(x + dt/2*k2x, v + dt/2*k2v);
+    const k4x = v + dt*k3v,    k4v = f(x + dt*k3x,   v + dt*k3v);
+    x += dt/6*(k1x+2*k2x+2*k3x+k4x);
+    v += dt/6*(k1v+2*k2v+2*k3v+k4v);
+    t += dt;
+  }
+  return pts;
+}
+
+// ── Drawing ───────────────────────────────────────────────────────────────────
+const COLORS = {
+  underdamped: '#6ee7f7',
+  critical:    '#f7c56e',
+  overdamped:  '#fb7185',
+  grid:        '#1e2330',
+  axis:        '#2e3345',
+  bg:          '#13161e',
+  text:        '#5a6070',
+};
+
+function getRegime(b) {
+  const disc = b * b - 4 * m * k;
+  if (Math.abs(disc) < 0.01) return 'critical';
+  return disc < 0 ? 'underdamped' : 'overdamped';
+}
+
+function getColor(b) { return COLORS[getRegime(b)]; }
+
+function drawGrid(ctx, W, H, xMin, xMax, yMin, yMax, nx, ny) {
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= nx; i++) {
+    const x = W * i / nx;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let i = 0; i <= ny; i++) {
+    const y = H * i / ny;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  // zero lines
+  ctx.strokeStyle = COLORS.axis;
+  ctx.lineWidth = 1.5;
+  const x0 = W * (0 - xMin) / (xMax - xMin);
+  const y0 = H * (1 - (0 - yMin) / (yMax - yMin));
+  ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, H); ctx.stroke();
+}
+
+function toCanvas(val, min, max, size) {
+  return size * (val - min) / (max - min);
+}
+
+function drawXT(pts, b) {
+  const W = xtCanvas.width, H = xtCanvas.height;
+  const dpr = devicePixelRatio;
+  xtCtx.fillStyle = COLORS.bg;
+  xtCtx.fillRect(0, 0, W, H);
+
+  const tMax = pts[pts.length - 1].t;
+  const yMax = 1.1, yMin = -1.1;
+  drawGrid(xtCtx, W, H, 0, tMax, yMin, yMax, 10, 8);
+
+  xtCtx.strokeStyle = getColor(b);
+  xtCtx.lineWidth = 2 * dpr;
+  xtCtx.beginPath();
+  pts.forEach((p, i) => {
+    const cx = toCanvas(p.t, 0, tMax, W);
+    const cy = H - toCanvas(p.x, yMin, yMax, H);
+    i === 0 ? xtCtx.moveTo(cx, cy) : xtCtx.lineTo(cx, cy);
+  });
+  xtCtx.stroke();
+
+  // envelope for underdamped
+  const regime = getRegime(b);
+  if (regime === 'underdamped') {
+    const gamma = b / (2 * m);
+    xtCtx.strokeStyle = 'rgba(110,231,247,0.2)';
+    xtCtx.lineWidth = 1.5 * dpr;
+    xtCtx.setLineDash([6, 4]);
+    [[1], [-1]].forEach(sign => {
+      xtCtx.beginPath();
+      pts.forEach((p, i) => {
+        const cx = toCanvas(p.t, 0, tMax, W);
+        const env = sign[0] * Math.exp(-gamma * p.t);
+        const cy = H - toCanvas(env, yMin, yMax, H);
+        i === 0 ? xtCtx.moveTo(cx, cy) : xtCtx.lineTo(cx, cy);
+      });
+      xtCtx.stroke();
+    });
+    xtCtx.setLineDash([]);
+  }
+
+  // labels
+  xtCtx.fillStyle = COLORS.text;
+  xtCtx.font = `${11 * dpr}px JetBrains Mono, monospace`;
+  xtCtx.fillText('t (s)', W - 30 * dpr, H - 6 * dpr);
+  xtCtx.fillText('x (m)', 4 * dpr, 14 * dpr);
+}
+
+function drawPP(pts, b) {
+  const W = ppCanvas.width, H = ppCanvas.height;
+  const dpr = devicePixelRatio;
+  ppCtx.fillStyle = COLORS.bg;
+  ppCtx.fillRect(0, 0, W, H);
+
+  const allX = pts.map(p => p.x);
+  const allV = pts.map(p => p.v);
+  const xMax = Math.max(1, ...allX.map(Math.abs)) * 1.1;
+  const vMax = Math.max(1, ...allV.map(Math.abs)) * 1.1;
+
+  drawGrid(ppCtx, W, H, -xMax, xMax, -vMax, vMax, 8, 8);
+
+  ppCtx.strokeStyle = getColor(b);
+  ppCtx.lineWidth = 2 * dpr;
+  ppCtx.beginPath();
+  pts.forEach((p, i) => {
+    const cx = toCanvas(p.x, -xMax, xMax, W);
+    const cy = H - toCanvas(p.v, -vMax, vMax, H);
+    i === 0 ? ppCtx.moveTo(cx, cy) : ppCtx.lineTo(cx, cy);
+  });
+  ppCtx.stroke();
+
+  // start dot
+  const cx0 = toCanvas(pts[0].x, -xMax, xMax, W);
+  const cy0 = H - toCanvas(pts[0].v, -vMax, vMax, H);
+  ppCtx.beginPath();
+  ppCtx.arc(cx0, cy0, 4 * dpr, 0, 2 * Math.PI);
+  ppCtx.fillStyle = getColor(b);
+  ppCtx.fill();
+
+  ppCtx.fillStyle = COLORS.text;
+  ppCtx.font = `${11 * dpr}px JetBrains Mono, monospace`;
+  ppCtx.fillText('x (m)', W - 34 * dpr, H - 6 * dpr);
+  ppCtx.fillText('ẋ (m/s)', 4 * dpr, 14 * dpr);
+}
+
+function updateRegimeBadge(b) {
+  const regime = getRegime(b);
+  const labels = { underdamped: 'Underdamped', critical: 'Critically Damped', overdamped: 'Overdamped' };
+  regimeBadge.className = 'badge ' + regime;
+  regimeBadge.textContent = labels[regime];
+}
+
+function update() {
+  const b = parseFloat(bSlider.value);
+  bValueEl.textContent = b.toFixed(2);
+  updateRegimeBadge(b);
+
+  resizeCanvases();
+  const pts = rk4(b);
+  drawXT(pts, b);
+  drawPP(pts, b);
+}
+
+bSlider.addEventListener('input', update);
+window.addEventListener('resize', update);
+update();
+</script>
+</body>
+</html>

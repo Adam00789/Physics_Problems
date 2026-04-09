@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 11 – Young's Double-Slit Interference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #08090d;
+    --panel: #10121a;
+    --border: #1a1d2e;
+    --accent: #6ee7f7;
+    --accent2: #f7c56e;
+    --text: #c8ccd8;
+    --muted: #505570;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .title-block { text-align: center; }
+  .title-block small {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .title-block h2 { font-size: 24px; font-weight: 400; font-style: italic; }
+
+  .layout {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 1060px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  canvas#field {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: default;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 230px;
+    flex: 1;
+  }
+
+  .ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  .val-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 5px;
+  }
+
+  .info-box {
+    background: rgba(110,231,247,0.04);
+    border: 1px solid rgba(110,231,247,0.1);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .info-box strong { color: var(--accent2); }
+
+  .derived {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+
+  .derived span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="title-block">
+  <small>Task 11 · Section 3: Waves</small>
+  <h2>Young's Double-Slit Interference</h2>
+</div>
+
+<div class="layout">
+  <canvas id="field" width="620" height="560"></canvas>
+
+  <div class="sidebar">
+
+    <div>
+      <div class="ctrl-label">Slit separation d (px)</div>
+      <input type="range" id="dSlider" min="20" max="200" step="2" value="80">
+      <div class="val-display" id="dVal">d = 80 px</div>
+    </div>
+
+    <div>
+      <div class="ctrl-label">Wavelength λ (px)</div>
+      <input type="range" id="lambdaSlider" min="20" max="120" step="2" value="50">
+      <div class="val-display" id="lambdaVal">λ = 50 px</div>
+    </div>
+
+    <div>
+      <div class="ctrl-label">Angular frequency ω</div>
+      <input type="range" id="omegaSlider" min="0.5" max="5" step="0.1" value="2">
+      <div class="val-display" id="omegaVal">ω = 2.0 rad/s</div>
+    </div>
+
+    <div class="derived" id="derivedInfo">
+      <span>k</span> = 2π / λ<br>
+      <span>fringe spacing</span> ≈ λL / d
+    </div>
+
+    <div class="info-box">
+      <strong>Constructive interference</strong> occurs where path difference Δr = mλ (bright fringes).<br><br>
+      <strong>Destructive interference</strong> occurs where Δr = (m + ½)λ (dark fringes).<br><br>
+      Slits shown as <span style="color:#f7c56e">yellow</span> dots. The barrier is at x = 40% of the canvas.
+    </div>
+
+    <div style="font-size:13px; color: var(--muted); line-height:1.65;">
+      u(r,t) = A/|r−r₁| · sin(k|r−r₁|−ωt)<br>
+              + A/|r−r₂| · sin(k|r−r₂|−ωt)
+    </div>
+
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('field');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let d = 80, lambda = 50, omega = 2.0;
+let t = 0;
+
+const dSlider     = document.getElementById('dSlider');
+const lambdaSlider= document.getElementById('lambdaSlider');
+const omegaSlider = document.getElementById('omegaSlider');
+const dVal        = document.getElementById('dVal');
+const lambdaVal   = document.getElementById('lambdaVal');
+const omegaVal    = document.getElementById('omegaVal');
+const derivedInfo = document.getElementById('derivedInfo');
+
+function updateDerived() {
+  const k = (2 * Math.PI / lambda).toFixed(4);
+  const L = W * 0.6;
+  const fringe = (lambda * L / d).toFixed(1);
+  derivedInfo.innerHTML =
+    `<span>k</span> = 2π / λ = ${k} px⁻¹<br>` +
+    `<span>fringe spacing</span> ≈ λL/d = ${fringe} px`;
+}
+
+dSlider.addEventListener('input', () => {
+  d = parseInt(dSlider.value);
+  dVal.textContent = `d = ${d} px`;
+  updateDerived();
+});
+lambdaSlider.addEventListener('input', () => {
+  lambda = parseInt(lambdaSlider.value);
+  lambdaVal.textContent = `λ = ${lambda} px`;
+  updateDerived();
+});
+omegaSlider.addEventListener('input', () => {
+  omega = parseFloat(omegaSlider.value);
+  omegaVal.textContent = `ω = ${omega.toFixed(1)} rad/s`;
+});
+
+updateDerived();
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+const imgData = ctx.createImageData(W, H);
+const BARRIER_X = Math.round(W * 0.4);
+const minR = 4;
+
+function render() {
+  const k = 2 * Math.PI / lambda;
+  const cy = H / 2;
+  const s1 = { x: BARRIER_X, y: cy - d / 2 };
+  const s2 = { x: BARRIER_X, y: cy + d / 2 };
+  const data = imgData.data;
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const idx = (py * W + px) * 4;
+
+      // source region (left of barrier): dark
+      if (px <= BARRIER_X) {
+        data[idx] = 8; data[idx+1] = 9; data[idx+2] = 13; data[idx+3] = 255;
+        continue;
+      }
+
+      const r1 = Math.max(minR, Math.hypot(px - s1.x, py - s1.y));
+      const r2 = Math.max(minR, Math.hypot(px - s2.x, py - s2.y));
+      const u = (1/r1) * Math.sin(k * r1 - omega * t)
+              + (1/r2) * Math.sin(k * r2 - omega * t);
+
+      // scale — amplitude decays with 1/r so boost for visibility
+      const norm = Math.tanh(u * 30);
+
+      if (norm > 0) {
+        data[idx]   = Math.round(norm * 100);
+        data[idx+1] = Math.round(norm * 210);
+        data[idx+2] = Math.round(norm * 255);
+      } else {
+        const n = -norm;
+        data[idx]   = Math.round(n * 255);
+        data[idx+1] = Math.round(n * 80);
+        data[idx+2] = Math.round(n * 160);
+      }
+      data[idx+3] = 255;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  // barrier line
+  ctx.strokeStyle = '#1a1d2e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(BARRIER_X, 0);
+  ctx.lineTo(BARRIER_X, cy - d/2 - 6);
+  ctx.moveTo(BARRIER_X, cy - d/2 + 6);
+  ctx.lineTo(BARRIER_X, cy + d/2 - 6);
+  ctx.moveTo(BARRIER_X, cy + d/2 + 6);
+  ctx.lineTo(BARRIER_X, H);
+  ctx.stroke();
+
+  // slit dots
+  [s1, s2].forEach((s, i) => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 5, 0, 2*Math.PI);
+    ctx.fillStyle = '#f7c56e';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.fillText(i+1, s.x + 8, s.y + 4);
+  });
+
+  // labels
+  ctx.fillStyle = '#505570';
+  ctx.font = '12px JetBrains Mono, monospace';
+  ctx.fillText('source', 8, H - 10);
+  ctx.fillText('interference pattern →', BARRIER_X + 8, H - 10);
+}
+
+function loop() {
+  t += 0.04;
+  render();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

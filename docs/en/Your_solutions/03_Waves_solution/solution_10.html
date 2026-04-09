@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 10 – Wave Sources</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #08090d;
+    --panel: #10121a;
+    --border: #1a1d2e;
+    --accent: #a78bfa;
+    --accent2: #6ee7f7;
+    --text: #c8ccd8;
+    --muted: #505570;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .title-block { text-align: center; }
+  .title-block small {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .title-block h2 { font-size: 24px; font-weight: 400; font-style: italic; }
+
+  .layout {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  canvas#field {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: crosshair;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 220px;
+    flex: 1;
+  }
+
+  .ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  .val-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+
+  button {
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: rgba(167,139,250,0.2); }
+
+  .hint {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .source-list {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<div class="title-block">
+  <small>Task 10 · Section 3: Waves</small>
+  <h2>Interactive Wave Sources</h2>
+</div>
+
+<div class="layout">
+  <canvas id="field" width="600" height="520"></canvas>
+
+  <div class="sidebar">
+    <div>
+      <div class="ctrl-label">Amplitude falloff α ∈ [0, 2]</div>
+      <input type="range" id="alphaSlider" min="0" max="2" step="0.05" value="0.5">
+      <div class="val-display" id="alphaVal">α = 0.50</div>
+    </div>
+
+    <div>
+      <div class="ctrl-label">Angular frequency ω</div>
+      <input type="range" id="omegaSlider" min="0.5" max="6" step="0.1" value="3">
+      <div class="val-display" id="omegaVal">ω = 3.0 rad/s</div>
+    </div>
+
+    <div>
+      <div class="ctrl-label">Wave number k</div>
+      <input type="range" id="kSlider" min="0.005" max="0.04" step="0.001" value="0.015">
+      <div class="val-display" id="kVal">k = 0.0150</div>
+    </div>
+
+    <button id="clearBtn">Clear Sources</button>
+
+    <div class="hint">
+      <strong>Click</strong> on the field to place a wave source.<br>
+      <strong>Right-click</strong> a source to remove it.
+    </div>
+
+    <div>
+      <div class="ctrl-label">Sources (<span id="sourceCount">0</span>)</div>
+      <div class="source-list" id="sourceList">—</div>
+    </div>
+
+    <div style="font-size:13px; color:var(--muted); line-height:1.6;">
+      u(r,t) = A · |r−r₀|<sup>−α</sup> · sin(k|r−r₀| − ωt)<br>
+      Superposition of all sources shown.
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('field');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let sources = [];
+let alpha = 0.5, omega = 3.0, k = 0.015;
+let t = 0;
+let animId;
+
+const alphaSlider = document.getElementById('alphaSlider');
+const omegaSlider = document.getElementById('omegaSlider');
+const kSlider = document.getElementById('kSlider');
+const alphaVal = document.getElementById('alphaVal');
+const omegaVal = document.getElementById('omegaVal');
+const kVal = document.getElementById('kVal');
+const sourceCount = document.getElementById('sourceCount');
+const sourceList = document.getElementById('sourceList');
+
+alphaSlider.addEventListener('input', () => {
+  alpha = parseFloat(alphaSlider.value);
+  alphaVal.textContent = `α = ${alpha.toFixed(2)}`;
+});
+omegaSlider.addEventListener('input', () => {
+  omega = parseFloat(omegaSlider.value);
+  omegaVal.textContent = `ω = ${omega.toFixed(1)} rad/s`;
+});
+kSlider.addEventListener('input', () => {
+  k = parseFloat(kSlider.value);
+  kVal.textContent = `k = ${k.toFixed(4)}`;
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  sources = [];
+  updateSourceList();
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = (e.clientX - rect.left) * (W / rect.width);
+  const sy = (e.clientY - rect.top) * (H / rect.height);
+  sources.push({ x: sx, y: sy });
+  updateSourceList();
+});
+
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = (e.clientX - rect.left) * (W / rect.width);
+  const sy = (e.clientY - rect.top) * (H / rect.height);
+  let best = -1, bestDist = 20;
+  sources.forEach((s, i) => {
+    const d = Math.hypot(s.x - sx, s.y - sy);
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  if (best >= 0) { sources.splice(best, 1); updateSourceList(); }
+});
+
+function updateSourceList() {
+  sourceCount.textContent = sources.length;
+  sourceList.innerHTML = sources.length === 0
+    ? '—'
+    : sources.map((s, i) => `[${i+1}] (${Math.round(s.x)}, ${Math.round(s.y)})`).join('<br>');
+}
+
+// ── Pixel rendering ───────────────────────────────────────────────────────────
+const imgData = ctx.createImageData(W, H);
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function render() {
+  if (sources.length === 0) {
+    ctx.fillStyle = '#08090d';
+    ctx.fillRect(0, 0, W, H);
+    // draw grid hint
+    ctx.strokeStyle = '#1a1d2e';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    ctx.fillStyle = '#505570';
+    ctx.font = '14px Crimson Pro, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Click to place wave sources', W/2, H/2);
+    ctx.textAlign = 'left';
+    return;
+  }
+
+  const data = imgData.data;
+  const minR = 5; // avoid 1/0 singularity
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      let u = 0;
+      for (const s of sources) {
+        const r = Math.max(minR, Math.hypot(px - s.x, py - s.y));
+        const falloff = alpha === 0 ? 1 : Math.pow(r, -alpha);
+        u += falloff * Math.sin(k * r - omega * t);
+      }
+      // normalise to [-1,1] (rough)
+      const norm = Math.tanh(u / sources.length);
+      const idx = (py * W + px) * 4;
+
+      // colour map: negative → indigo, zero → black, positive → violet/cyan
+      if (norm > 0) {
+        data[idx]   = Math.round(norm * 110);  // R
+        data[idx+1] = Math.round(norm * 200);  // G
+        data[idx+2] = Math.round(norm * 255);  // B
+      } else {
+        const n = -norm;
+        data[idx]   = Math.round(n * 220);
+        data[idx+1] = Math.round(n * 80);
+        data[idx+2] = Math.round(n * 180);
+      }
+      data[idx+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // draw source dots
+  sources.forEach((s, i) => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 6, 0, 2*Math.PI);
+    ctx.fillStyle = '#a78bfa';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.fillText(i+1, s.x + 9, s.y + 4);
+  });
+}
+
+function loop() {
+  t += 0.04;
+  render();
+  animId = requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
